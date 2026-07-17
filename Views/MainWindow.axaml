@@ -1,0 +1,314 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Maki.ViewModels"
+        xmlns:m="using:Maki.Models"
+        x:Class="Maki.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Maki"
+        Width="500" Height="720"
+        MinWidth="400" MinHeight="560"
+        Background="#0b0b1c"
+        FontFamily="Inter,Segoe UI,sans-serif">
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         Estilos globales de la ventana
+    ══════════════════════════════════════════════════════════════════ -->
+    <Window.Styles>
+
+        <!-- Orbe: estado inactivo -->
+        <Style Selector="Ellipse.orb">
+            <Setter Property="Fill"   Value="#1e1440"/>
+            <Setter Property="Width"  Value="130"/>
+            <Setter Property="Height" Value="130"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Fill" Duration="0:0:0.4"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Orbe: escuchando -->
+        <Style Selector="Ellipse.orb.listening">
+            <Setter Property="Fill" Value="#5c1010"/>
+            <Style.Animations>
+                <Animation Duration="0:0:1" IterationCount="Infinite"
+                           PlaybackDirection="Alternate" Easing="SineEaseInOut">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="1.0"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="0.55"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Orbe: procesando -->
+        <Style Selector="Ellipse.orb.processing">
+            <Setter Property="Fill" Value="#0e2550"/>
+            <Style.Animations>
+                <Animation Duration="0:0:1.5" IterationCount="Infinite"
+                           PlaybackDirection="Alternate" Easing="QuadraticEaseInOut">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="1.0"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="0.4"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Botón primario personalizado -->
+        <Style Selector="Button.mic-btn">
+            <Setter Property="Width"          Value="180"/>
+            <Setter Property="Height"         Value="48"/>
+            <Setter Property="CornerRadius"   Value="24"/>
+            <Setter Property="Background"     Value="#4a3aaa"/>
+            <Setter Property="Foreground"     Value="#ffffff"/>
+            <Setter Property="FontSize"       Value="15"/>
+            <Setter Property="FontWeight"     Value="SemiBold"/>
+            <Setter Property="Cursor"         Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.mic-btn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#6050cc"/>
+        </Style>
+        <Style Selector="Button.mic-btn.active">
+            <Setter Property="Background" Value="#9b1111"/>
+        </Style>
+        <Style Selector="Button.mic-btn:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2a2a50"/>
+            <Setter Property="Opacity"    Value="0.5"/>
+        </Style>
+
+        <!-- Burbuja: usuario -->
+        <Style Selector="Border.bubble-user">
+            <Setter Property="Background"    Value="#1e1a45"/>
+            <Setter Property="BorderBrush"   Value="#5a44cc"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"  Value="14,14,4,14"/>
+            <Setter Property="Padding"       Value="12,8"/>
+            <Setter Property="MaxWidth"      Value="360"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+
+        <!-- Burbuja: asistente -->
+        <Style Selector="Border.bubble-assistant">
+            <Setter Property="Background"    Value="#111228"/>
+            <Setter Property="BorderBrush"   Value="#2244aa"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"  Value="14,14,14,4"/>
+            <Setter Property="Padding"       Value="12,8"/>
+            <Setter Property="MaxWidth"      Value="360"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+
+        <!-- Botón pequeño -->
+        <Style Selector="Button.sm-btn">
+            <Setter Property="Background"   Value="#1e1e3a"/>
+            <Setter Property="Foreground"   Value="#9090cc"/>
+            <Setter Property="FontSize"     Value="12"/>
+            <Setter Property="Padding"      Value="10,5"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+        </Style>
+        <Style Selector="Button.sm-btn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2a2a4e"/>
+        </Style>
+
+    </Window.Styles>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         Layout principal
+    ══════════════════════════════════════════════════════════════════ -->
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- ─── CABECERA ──────────────────────────────────────────────── -->
+        <Border Grid.Row="0" Background="#10102a" Padding="20,14">
+            <Grid ColumnDefinitions="*,Auto">
+
+                <StackPanel Spacing="2">
+                    <TextBlock Text="MAKI"
+                               FontSize="20" FontWeight="Bold"
+                               Foreground="#8877ee" LetterSpacing="5"/>
+                    <TextBlock Text="{Binding StatusText}"
+                               FontSize="11" Foreground="#7070aa"/>
+                </StackPanel>
+
+                <!-- Indicador LM Studio -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                            Spacing="6" VerticalAlignment="Center">
+                    <Ellipse Width="9" Height="9"
+                             Classes.connected="{Binding IsConnected}">
+                        <Ellipse.Styles>
+                            <Style Selector="Ellipse">
+                                <Setter Property="Fill" Value="#aa2222"/>
+                            </Style>
+                            <Style Selector="Ellipse.connected">
+                                <Setter Property="Fill" Value="#22cc66"/>
+                            </Style>
+                        </Ellipse.Styles>
+                    </Ellipse>
+                    <TextBlock Text="LM Studio" FontSize="11"
+                               Foreground="#6666aa" VerticalAlignment="Center"/>
+                    <Button Classes="sm-btn"
+                            Content="↻"
+                            Command="{Binding CheckConnectionCommand}"
+                            Padding="6,3" Margin="4,0,0,0"
+                            ToolTip.Tip="Verificar conexión"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ─── ORBE + BOTÓN ───────────────────────────────────────────── -->
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center"
+                    Spacing="20" Margin="0,30,0,24">
+
+            <!-- Orbe con efecto glow -->
+            <Panel HorizontalAlignment="Center">
+                <!-- Halo exterior (glow simulado) -->
+                <Ellipse Width="150" Height="150" HorizontalAlignment="Center"
+                         VerticalAlignment="Center" Opacity="0.25"
+                         Classes.listening="{Binding IsListening}"
+                         Classes.processing="{Binding IsProcessing}">
+                    <Ellipse.Styles>
+                        <Style Selector="Ellipse">
+                            <Setter Property="Fill" Value="#3a2a88"/>
+                        </Style>
+                        <Style Selector="Ellipse.listening">
+                            <Setter Property="Fill" Value="#cc2222"/>
+                        </Style>
+                        <Style Selector="Ellipse.processing">
+                            <Setter Property="Fill" Value="#1144cc"/>
+                        </Style>
+                    </Ellipse.Styles>
+                </Ellipse>
+
+                <!-- Orbe principal -->
+                <Ellipse Classes="orb"
+                         Classes.listening="{Binding IsListening}"
+                         Classes.processing="{Binding IsProcessing}"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"/>
+            </Panel>
+
+            <!-- Botón micrófono -->
+            <Button Classes="mic-btn"
+                    Classes.active="{Binding IsListening}"
+                    Command="{Binding ToggleListeningCommand}"
+                    HorizontalAlignment="Center">
+                <Panel>
+                    <TextBlock IsVisible="{Binding !IsListening}"
+                               Text="◉  HABLAR"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock IsVisible="{Binding IsListening}"
+                               Text="■  DETENER"
+                               HorizontalAlignment="Center"/>
+                </Panel>
+            </Button>
+        </StackPanel>
+
+        <!-- ─── HISTORIAL DE CHAT ──────────────────────────────────────── -->
+        <Border Grid.Row="2" Margin="12,0" CornerRadius="12"
+                Background="#0d0d22" BorderBrush="#1e1e40" BorderThickness="1">
+            <Grid RowDefinitions="Auto,*">
+
+                <Border Grid.Row="0" Padding="12,8" Background="#0f0f28"
+                        CornerRadius="12,12,0,0" BorderBrush="#1e1e40"
+                        BorderThickness="0,0,0,1">
+                    <TextBlock Text="Conversación"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="#555588" LetterSpacing="1"/>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" x:Name="ChatScroll"
+                              VerticalScrollBarVisibility="Auto"
+                              Padding="12,8">
+                    <ItemsControl ItemsSource="{Binding Messages}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="m:ChatMessage">
+                                <Grid Margin="0,4">
+
+                                    <!-- Mensaje del usuario (derecha) -->
+                                    <Border Classes="bubble-user"
+                                            IsVisible="{Binding IsUser}">
+                                        <TextBlock Text="{Binding Content}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="#dde0ff"
+                                                   FontSize="14"/>
+                                    </Border>
+
+                                    <!-- Mensaje del asistente (izquierda) -->
+                                    <Border Classes="bubble-assistant"
+                                            IsVisible="{Binding IsAssistant}">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="MAKI"
+                                                       FontSize="10"
+                                                       FontWeight="Bold"
+                                                       Foreground="#4466dd"
+                                                       LetterSpacing="2"/>
+                                            <TextBlock Text="{Binding Content}"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="#b8c8ff"
+                                                       FontSize="14"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+            </Grid>
+        </Border>
+
+        <!-- ─── BARRA INFERIOR (configuración rápida) ─────────────────── -->
+        <Border Grid.Row="3" Background="#10102a" Padding="12,10">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+
+                <!-- Campo: ID del modelo -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Modelo:" FontSize="11"
+                               Foreground="#555588" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding ModelId}"
+                             Background="#1a1a35" Foreground="#9090cc"
+                             FontSize="12" Padding="6,4"
+                             Width="160" CornerRadius="6"
+                             BorderBrush="#2a2a50" BorderThickness="1"
+                             VerticalContentAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Toggle TTS -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center" Margin="8,0">
+                    <ToggleSwitch IsChecked="{Binding TtsEnabled}"
+                                  OnContent="" OffContent=""
+                                  Foreground="#555588"/>
+                    <TextBlock Text="Voz" FontSize="11"
+                               Foreground="#555588" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Botón cancelar -->
+                <Button Grid.Column="2" Classes="sm-btn"
+                        Content="✕ Cancelar"
+                        Command="{Binding CancelGenerationCommand}"
+                        IsVisible="{Binding IsProcessing}"
+                        Margin="4,0"/>
+
+                <!-- Botón borrar historial -->
+                <Button Grid.Column="3" Classes="sm-btn"
+                        Content="🗑 Borrar"
+                        Command="{Binding ClearHistoryCommand}"/>
+            </Grid>
+        </Border>
+
+    </Grid>
+</Window>
